@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>じゃんけんバトル</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --win: #007bff;
+            --lose: #dc3545;
+            --draw: #6c757d;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #2a2a2a;
+            --text: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+            max-width: 100%;
+        }
+        
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 1rem;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            width: 100%;
+            position: relative;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 0.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            margin: 0.5rem 0;
+        }
+
+        .battle-field {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            justify-content: space-between;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .player-area, .vs-area, .computer-area {
+            background-color: var(--bg-darker);
+            border-radius: 8px;
+            padding: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .vs-area {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-width: 80px;
+            max-width: 100px;
+            padding: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .vs-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .result {
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 0.3rem 0.8rem;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 0.5rem 0;
+            white-space: nowrap;
+        }
+
+        .hand {
+            font-size: 3rem;
+            margin: 0.5rem 0;
+            transition: transform 0.3s ease;
+            line-height: 1;
+        }
+
+        .hand.animate {
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .choices {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            flex-wrap: wrap;
+            padding: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .choice-btn {
+            background-color: var(--primary);
+            border: none;
+            border-radius: 8px;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            padding: 0.5rem;
+        }
+
+        .choice-btn:hover {
+            transform: scale(1.05);
+            background-color: #00cc66;
+        }
+
+        .choice-btn .material-icons {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats {
+            background-color: var(--bg-darker);
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .stats h2 {
+            color: var(--primary);
+            margin: 0.3rem 0;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .stat-item span {
+            display: block;
+            font-size: 1.2rem;
+        }
+
+        .wins { color: var(--win); }
+        .losses { color: var(--lose); }
+        .draws { color: var(--draw); }
+
+        .reset-btn {
+            display: block;
+            margin: 0.5rem auto;
+            padding: 0.5rem 1.5rem;
+            background-color: var(--primary);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .reset-btn:hover {
+            background-color: #00cc66;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* モバイル用のスタイルを調整 */
+        @media (max-width: 768px) {
+            .battle-field {
+                flex-direction: row;
+                gap: 0.3rem;
+                margin: 0.3rem 0;
+                padding: 0 0.5rem;
+                box-sizing: border-box;
+            }
+            
+            .player-area, .vs-area, .computer-area {
+                width: 100%;
+                max-width: none;
+                padding: 0.3rem;
+                min-width: 0;
+            }
+            
+            .hand {
+                font-size: 2.5rem;
+            }
+            
+            .vs-text {
+                font-size: 1.5rem;
+            }
+            
+            .choice-btn {
+                width: 80px;
+                height: 80px;
+                font-size: 0.8rem;
+            }
+            
+            .choice-btn .material-icons {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-height: 700px) {
+            .hand {
+                font-size: 2.5rem !important;
+            }
+            
+            .choice-btn {
+                width: 70px !important;
+                height: 70px !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .choice-btn .material-icons {
+                font-size: 1.8rem !important;
+            }
+            
+            .stats {
+                padding: 0.5rem;
+            }
+            
+            .stats h2 {
+                font-size: 1rem;
+                margin: 0.2rem 0;
+            }
+            
+            .stats-grid {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>じゃんけんバトル</h1>
+        </header>
+
+        <main>
+            <div class="battle-field">
+                <div class="player-area">
+                    <h2>プレイヤー</h2>
+                    <div id="player-hand" class="hand">?</div>
+                </div>
+
+                <div class="vs-area">
+                    <div class="vs-text">VS</div>
+                    <div id="result" class="result">選んでね！</div>
+                </div>
+
+                <div class="computer-area">
+                    <h2>コンピューター</h2>
+                    <div id="computer-hand" class="hand">?</div>
+                </div>
+            </div>
+
+            <div class="choices">
+                <button class="choice-btn" data-choice="rock">
+                    <span class="material-icons">fiber_manual_record</span>
+                    <span>グー</span>
+                </button>
+                <button class="choice-btn" data-choice="scissors">
+                    <span class="material-icons">content_cut</span>
+                    <span>チョキ</span>
+                </button>
+                <button class="choice-btn" data-choice="paper">
+                    <span class="material-icons">filter_none</span>
+                    <span>パー</span>
+                </button>
+            </div>
+
+            <div class="stats">
+                <h2>戦績</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="wins">勝ち: <span id="wins">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="losses">負け: <span id="losses">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="draws">あいこ: <span id="draws">0</span></span>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <span>連勝記録: <span id="current-streak">0</span> (最高: <span id="max-streak">0</span>)</span>
+                </div>
+            </div>
+
+            <button id="reset-btn" class="reset-btn hidden">もう一度</button>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ゲームの状態
+            const state = {
+                playerChoice: null,
+                computerChoice: null,
+                result: null,
+                stats: {
+                    wins: 0,
+                    losses: 0,
+                    draws: 0,
+                    currentStreak: 0,
+                    maxStreak: 0
+                }
+            };
+
+
+            // DOM要素
+            const playerHand = document.getElementById('player-hand');
+            const computerHand = document.getElementById('computer-hand');
+            const resultDisplay = document.getElementById('result');
+            const choiceBtns = document.querySelectorAll('.choice-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const winsDisplay = document.getElementById('wins');
+            const lossesDisplay = document.getElementById('losses');
+            const drawsDisplay = document.getElementById('draws');
+            const currentStreakDisplay = document.getElementById('current-streak');
+            const maxStreakDisplay = document.getElementById('max-streak');
+
+            // 手のアイコンマッピング
+            const handIcons = {
+                rock: '✊',
+                paper: '✋',
+                scissors: '✌️'
+            };
+
+            // 手の名前マッピング
+            const handNames = {
+                rock: 'グー',
+                paper: 'パー',
+                scissors: 'チョキ'
+            };
+
+            // 勝敗判定
+            function determineWinner(player, computer) {
+                if (player === computer) return 'draw';
+                
+                const rules = {
+                    rock: 'scissors',
+                    paper: 'rock',
+                    scissors: 'paper'
+                };
+                
+                return rules[player] === computer ? 'win' : 'lose';
+            }
+
+
+            // ゲームの更新
+            function updateGame() {
+                // 手の表示を更新
+                playerHand.textContent = handIcons[state.playerChoice] || '?';
+                computerHand.textContent = handIcons[state.computerChoice] || '?';
+                
+                // アニメーションをリセット
+                playerHand.classList.remove('animate');
+                computerHand.classList.remove('animate');
+                
+                // アニメーションを再適用
+                setTimeout(() => {
+                    playerHand.classList.add('animate');
+                    computerHand.classList.add('animate');
+                }, 10);
+                
+                // 結果を表示
+                if (state.result === 'win') {
+                    resultDisplay.textContent = '勝ち！';
+                    resultDisplay.style.color = 'var(--win)';
+                } else if (state.result === 'lose') {
+                    resultDisplay.textContent = '負け...';
+                    resultDisplay.style.color = 'var(--lose)';
+                } else if (state.result === 'draw') {
+                    resultDisplay.textContent = 'あいこ！';
+                    resultDisplay.style.color = 'var(--draw)';
+                }
+                
+                // ボタンの状態を更新
+                choiceBtns.forEach(btn => {
+                    btn.disabled = state.playerChoice !== null;
+                });
+                
+                // リセットボタンの表示/非表示
+                resetBtn.classList.toggle('hidden', state.playerChoice === null);
+                
+                // 統計を更新
+                updateStats();
+            }
+
+
+            // 統計の更新
+            function updateStats() {
+                winsDisplay.textContent = state.stats.wins;
+                lossesDisplay.textContent = state.stats.losses;
+                drawsDisplay.textContent = state.stats.draws;
+                currentStreakDisplay.textContent = state.stats.currentStreak;
+                maxStreakDisplay.textContent = state.stats.maxStreak;
+            }
+
+
+            // ゲームのリセット
+            function resetGame() {
+                state.playerChoice = null;
+                state.computerChoice = null;
+                state.result = null;
+                
+                playerHand.textContent = '?';
+                computerHand.textContent = '?';
+                resultDisplay.textContent = '選んでね！';
+                resultDisplay.style.color = 'var(--text)';
+                
+                choiceBtns.forEach(btn => {
+                    btn.disabled = false;
+                });
+                
+                resetBtn.classList.add('hidden');
+            }
+
+
+            // イベントリスナーの設定
+            choiceBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // プレイヤーの選択
+                    state.playerChoice = btn.dataset.choice;
+                    
+                    // コンピューターの選択（ランダム）
+                    const choices = ['rock', 'paper', 'scissors'];
+                    state.computerChoice = choices[Math.floor(Math.random() * choices.length)];
+                    
+                    // 勝敗を判定
+                    state.result = determineWinner(state.playerChoice, state.computerChoice);
+                    
+                    // 統計を更新
+                    if (state.result === 'win') {
+                        state.stats.wins++;
+                        state.stats.currentStreak++;
+                        if (state.stats.currentStreak > state.stats.maxStreak) {
+                            state.stats.maxStreak = state.stats.currentStreak;
+                        }
+                    } else if (state.result === 'lose') {
+                        state.stats.losses++;
+                        state.stats.currentStreak = 0;
+                    } else {
+                        state.stats.draws++;
+                    }
+                    
+                    // ゲームを更新
+                    updateGame();
+                });
+            });
+            
+            // リセットボタン
+            resetBtn.addEventListener('click', resetGame);
+        });
+    </script>
+</body>
+</html>
