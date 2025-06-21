@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>じゃんけんバトル</title>
+    <!-- BGM用のオーディオ要素 -->
+    <audio id="bgm" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        お使いのブラウザはオーディオ要素をサポートしていません。
+    </audio>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         :root {
@@ -296,7 +301,12 @@
 <body>
     <div class="container">
         <header>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px; margin: 0 auto 1rem;">
             <h1>じゃんけんバトル</h1>
+            <button id="bgm-toggle" style="background: none; border: 2px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; background-color: rgba(0, 255, 136, 0.1);">
+                <span class="material-icons" id="bgm-icon">volume_off</span>
+            </button>
+        </div>
         </header>
 
         <main>
@@ -355,6 +365,63 @@
     </div>
 
     <script>
+        // BGMの再生状態を管理
+        const bgm = document.getElementById('bgm');
+        const bgmToggle = document.getElementById('bgm-toggle');
+        const bgmIcon = document.getElementById('bgm-icon');
+        let isBgmPlaying = false;
+
+        // BGMトグルボタンのクリックイベント
+        bgmToggle.addEventListener('click', () => {
+            if (isBgmPlaying) {
+                bgm.pause();
+                bgmIcon.textContent = 'volume_off';
+                bgmToggle.style.borderColor = 'var(--primary)';
+                bgmToggle.style.backgroundColor = 'rgba(0, 255, 136, 0.1)';
+            } else {
+                // ユーザーインタラクションを検知してから再生を開始
+                bgm.play().then(() => {
+                    bgmIcon.textContent = 'volume_up';
+                    bgmToggle.style.borderColor = '#00ff88';
+                    bgmToggle.style.backgroundColor = 'rgba(0, 255, 136, 0.2)';
+                }).catch(error => {
+                    console.error('BGMの再生に失敗しました:', error);
+                    alert('BGMの再生に失敗しました。ページを再読み込みして、許可を求めるメッセージを確認してください。');
+                });
+            }
+            isBgmPlaying = !isBgmPlaying;
+        });
+
+        // ユーザーインタラクションを検知したらBGMを有効化
+        document.addEventListener('click', function enableBgm() {
+            // 一度きりのイベントなので削除
+            document.removeEventListener('click', enableBgm);
+            
+            // 自動再生を試みるが、ユーザーが再生ボタンを押すまで待機する
+            bgm.volume = 0.3; // ボリュームを下げる
+            console.log('BGMの準備ができました。ボタンを押して再生してください。');
+        }, { once: true });
+
+        // ユーザーが初めて手を選んだときにBGMを再生するオプション
+        let firstInteraction = true;
+        document.querySelectorAll('.choice-btn').forEach(btn => {
+            btn.addEventListener('click', function onFirstInteraction() {
+                if (firstInteraction && !isBgmPlaying) {
+                    firstInteraction = false;
+                    // ユーザーが手を選んだらBGMを再生
+                    bgm.play().then(() => {
+                        isBgmPlaying = true;
+                        bgmIcon.textContent = 'volume_up';
+                        bgmToggle.style.borderColor = '#00ff88';
+                        bgmToggle.style.backgroundColor = 'rgba(0, 255, 136, 0.2)';
+                    }).catch(error => {
+                        console.error('BGMの自動再生に失敗しました:', error);
+                    });
+                }
+            });
+        });
+
+        // 既存のスクリプトの続き
         document.addEventListener('DOMContentLoaded', () => {
             // ゲームの状態
             const state = {
